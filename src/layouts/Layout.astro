@@ -1,0 +1,39 @@
+---
+import '../styles/global.css';
+export interface Props {
+	title: string;
+}
+const { title } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body class="bg-black text-white font-sans">
+		<header class="bg-black backdrop-blur-sm border-b border-white sticky top-0 z-50">
+			<div class="container mx-auto px-4">
+				<div class="flex items-center justify-between pl-8 h-30">
+					<a href="/" class="text-[12px] text-white">
+						INTERNATIONAL ORGANIZATION FOR IDENTITY DOCUMENTS<br>
+                        ORGANISATION INTERNATIONALE DES DOCUMENTS D'IDENTITÉ<br>
+                        RAHVUSVAHELINE ISIKUT TÕENDAVA DOKUMENTI ORGANISATSIOON<br>
+                        ORGANIZACIÓN INTERNACIONAL PARA EL DOCUMENTO DE IDENTIDAD<br>
+                        INTERNATIONALE ORGANISATION FÜR IDENTITÄTSDOKUMENTE
+					</a>
+					<nav>
+						<a href="/#registry" class="text-white hover:text-white pr-8 hover:underline">
+							REGISTRY
+						</a>
+					</nav>
+				</div>
+			</div>
+		</header>
+		<main class="container mx-auto p-12 py-12">
+			<slot />
+		</main>
+	</body>
+</html>

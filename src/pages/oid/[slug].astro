@@ -1,0 +1,99 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SubOidEntry from '../../components/SubOidEntry.astro';
+import RegistryRows from '../../components/RegistryRows.astro';
+
+export async function getStaticPaths() {
+  const rootUrl = 'https://oid.ioid.workers.dev/root.json';
+  const subRegistryBaseUrl = 'https://oid.ioid.workers.dev/sub-registry/';
+  const allPaths = [];
+
+  async function discoverPaths(registries, parentOid = null) {
+    for (const registry of registries) {
+      const isInternal = registry.internal === "true";
+      const fullOid = parentOid ? `${parentOid}.${registry.oid}` : registry.oid;
+
+      if (isInternal) {
+        allPaths.push({
+          params: { slug: fullOid },
+          props: { data: registry, fullOid: fullOid }
+        });
+
+        let children = registry.subRegistries || [];
+        if (!registry.subRegistries) {
+          try {
+            const response = await fetch(`${subRegistryBaseUrl}${fullOid}.json`);
+            if (response.ok) children = await response.json();
+          } catch (e) { /* Fail silently */ }
+        }
+        
+        if (children.length > 0) {
+          await discoverPaths(children, fullOid);
+        }
+      }
+    }
+  }
+
+  const initialResponse = await fetch(rootUrl);
+  if (initialResponse.ok) {
+    const rootRegistries = await initialResponse.json();
+    await discoverPaths(rootRegistries);
+  }
+
+  return allPaths;
+}
+
+const { data, fullOid } = Astro.props;
+let subRegistriesForThisPage = [];
+
+if (data.internal === "true") {
+  try {
+    const subRegistryUrl = `https://oid.ioid.workers.dev/sub-registry/${fullOid}.json`;
+    const response = await fetch(subRegistryUrl);
+    if (response.ok) {
+      subRegistriesForThisPage = await response.json();
+    }
+  } catch (error) {
+    console.error(`Could not fetch sub-registry for ${fullOid}:`, error);
+  }
+}
+
+const hasChildren = subRegistriesForThisPage.length > 0;
+---
+<Layout title={`IOID Registry - ${data.name}`}>
+  <header class="mb-12">
+    <nav class="text-sm mb-4 text-zinc-400">
+      <a href={`/registrar/`} class="text-cyan-400 hover:underline">Root</a>
+    </nav>
+    <h1 class="text-4xl font-bold text-white">{data.name}</h1>
+    <p class="text-lg text-zinc-400 font-mono mt-2">
+      <span class="text-zinc-500">Path:</span> {fullOid}
+    </p>
+  </header>
+
+  {hasChildren ? (
+    <section>
+      <h2 class="text-2xl font-semibold border-b border-zinc-700 text-white pb-4 mb-6">Sub-Registry Hierarchy</h2>
+      <div class="rounded-lg overflow-hidden bg-black">
+        <table class="w-full table-auto text-[12px] text-left">
+          <thead class="text-md text-white uppercase bg-zinc-800 border-b border-zinc-600">
+            <tr>
+              <th class="px-6 py-4 font-semibold tracking-wider w-[25%]">Decimal</th>
+              <th class="px-6 py-4 font-semibold tracking-wider w-[35%]">Organization / Authority</th>
+              <th class="px-6 py-4 font-semibold tracking-wider w-[25%]">Registrar</th>
+              <th class="px-6 py-4 font-semibold tracking-wider w-[15%]">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-800">
+            <RegistryRows registries={subRegistriesForThisPage} parentOid={fullOid} />
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ) : (
+    <div>
+      <h2 class="text-2xl font-semibold border-b border-zinc-700 text-white pb-4 mb-6">OID Details</h2>
+      <SubOidEntry {...data} oid={fullOid} />
+    </div>
+  )}
+</Layout>

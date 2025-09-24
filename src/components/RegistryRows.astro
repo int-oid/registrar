@@ -1,0 +1,46 @@
+---
+export interface Props {
+  registries: any[];
+  level?: number;
+  parentOid: string;
+}
+
+const { registries, level = 0, parentOid } = Astro.props;
+---
+{registries.map(registry => {
+  const fullOid = `${parentOid}.${registry.oid}`;
+  const isInternal = registry.internal === "true";
+  const oidCellStyle = `padding-left: ${1.5 + (level * 1.5)}rem;`;
+
+  return (
+    <>
+      <tr class="bg-black/50">
+        <td class="py-4 font-mono text-cyan-400" style={oidCellStyle}>
+          <span class="select-none mr-2 text-white/65">↳</span>
+          {isInternal ? (
+            <a href={`/oid/${fullOid}/`}>{fullOid}</a>
+          ) : (
+            <a href={registry.url} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2">
+              {fullOid}
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+          )}
+        </td>
+        <td class="px-6 py-4 text-white">{registry.name}</td>
+        <td class="px-6 py-4 text-white">
+          {registry.owner}
+          {!isInternal && <div><span class="block text-xs text-white/65">External</span></div>}
+        </td>
+        <td class="px-6 py-4">{registry.status ?? 'ACTIVE'}</td>
+      </tr>
+      {/* --- RECURSIVE CALL: Only for internal branches --- */}
+      {isInternal && registry.subRegistries && (
+        <Astro.self 
+          registries={registry.subRegistries} 
+          level={level + 1} 
+          parentOid={fullOid} 
+        />
+      )}
+    </>
+  );
+})}

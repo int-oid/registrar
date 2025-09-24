@@ -1,0 +1,28 @@
+---
+export interface Props {
+  oid: string;
+  name: string;
+  description: string;
+  owner?: string;
+  mou?: string;
+}
+
+const { oid, name, description, owner, mou } = Astro.props;
+---
+<div class="bg-zinc-800/50 border border-zinc-700/50 p-5 rounded-lg">
+  <div class="flex flex-col sm-flex-row justify-between sm:items-start">
+    <div>
+      <p class="text-lg font-semibold text-white space-y-2">{name}</p>
+      <p class="text-zinc-400 font-mono text-sm break-all mt-1 space-y-2">{oid}</p>
+    </div>
+    <div class="mt-3 sm:mt-0 flex-shrink-0 flex flex-col items-start sm:items-end space-y-2 text-xs text-white/75">
+      {owner && <p class="space-y-2 text-white/75"><span class="text-white/75">Registrar:</span> {owner}</p>}
+      {mou && <p class="text-white/75 space-y-2">Shared via MoU</p>}
+    </div>
+  </div>
+  {description && (
+    <p class="mt-4 text-sm text-white/75">
+      {description}
+    </p>
+  )}
+</div>
